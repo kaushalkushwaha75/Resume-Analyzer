@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block title %}Analysis Results{% endblock %}
+
+{% block content %}
+<section class="results-hero">
+    <div class="results-hero-bg">
+        <div class="hero-orb hero-orb-1"></div>
+        <div class="hero-orb hero-orb-2"></div>
+    </div>
+    <div class="results-hero-content">
+        <p class="results-file-badge">📄 {{ results.filename }}</p>
+        <h1 class="results-title">Analysis Complete</h1>
+    </div>
+</section>
+
+<section class="results-section">
+    <div class="results-container">
+
+        <!-- ── Score Overview Row ────────────────────────────────────────── -->
+        <div class="scores-overview">
+            <!-- Composite Score (Main) -->
+            <div class="score-main glass-card">
+                <h2 class="score-label">Overall Match</h2>
+                <div class="score-ring-wrapper">
+                    <svg class="score-ring" viewBox="0 0 120 120">
+                        <circle class="ring-bg" cx="60" cy="60" r="52" />
+                        <circle class="ring-fill" cx="60" cy="60" r="52"
+                            data-score="{{ results.composite_score }}"
+                            style="--score: {{ results.composite_score }}" />
+                    </svg>
+                    <div class="score-center">
+                        <span class="score-value" data-target="{{ results.composite_score }}">0</span>
+                        <span class="score-unit">%</span>
+                    </div>
+                </div>
+                <p class="score-breakdown">
+                    Semantic: {{ results.overall_similarity }}% &middot;
+                    Skills: {{ results.skill_match.match_percentage }}% &middot;
+                    ATS: {{ results.ats.percentage }}%
+                </p>
+            </div>
+
+            <!-- Mini Score Cards -->
+            <div class="score-cards">
+                <div class="score-card glass-card">
+                    <div class="sc-icon">🧠</div>
+                    <div class="sc-info">
+                        <div class="sc-value-row">
+                            <span class="sc-value" data-target="{{ results.overall_similarity }}">0</span>
+                            <span class="sc-pct">%</span>
+                        </div>
+                        <span class="sc-label">Semantic Match</span>
+                    </div>
+                </div>
+                <div class="score-card glass-card">
+                    <div class="sc-icon">🎯</div>
+                    <div class="sc-info">
+                        <div class="sc-value-row">
+                            <span class="sc-value" data-target="{{ results.skill_match.match_percentage }}">0</span>
+                            <span class="sc-pct">%</span>
+                        </div>
+                        <span class="sc-label">Skill Match</span>
+                    </div>
+                </div>
+                <div class="score-card glass-card">
+                    <div class="sc-icon">📊</div>
+                    <div class="sc-info">
+                        <div class="sc-value-row">
+                            <span class="sc-value" data-target="{{ results.ats.percentage }}">0</span>
+                            <span class="sc-pct">%</span>
+                        </div>
+                        <span class="sc-label">ATS Score</span>
+                    </div>
+                </div>
+                <div class="score-card glass-card">
+                    <div class="sc-icon">📝</div>
+                    <div class="sc-info">
+                        <div class="sc-value-row">
+                            <span class="sc-value">{{ results.resume_word_count }}</span>
+                        </div>
+                        <span class="sc-label">Words</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Skills Analysis ───────────────────────────────────────────── -->
+        <div class="panel glass-card" id="skills-panel">
+            <h2 class="panel-title">🎯 Skill Analysis</h2>
+            <p class="panel-subtitle">
+                {{ results.skill_match.matched | length }} matched &middot;
+                {{ results.skill_match.missing | length }} missing &middot;
+                {{ results.skill_match.extra | length }} bonus skills
+            </p>
+
+            <div class="skills-grid">
+                <!-- Matched Skills -->
+                {% if results.skill_match.matched %}
+                <div class="skill-group">
+                    <h3 class="skill-group-title matched-title">✅ Matched Skills</h3>
+                    <div class="skill-tags">
+                        {% for skill in results.skill_match.matched %}
+                        <span class="skill-tag tag-matched">{{ skill.skill }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Missing Skills -->
+                {% if results.skill_match.missing %}
+                <div class="skill-group">
+                    <h3 class="skill-group-title missing-title">❌ Missing from Resume</h3>
+                    <div class="skill-tags">
+                        {% for skill in results.skill_match.missing %}
+                        <span class="skill-tag tag-missing {% if skill.priority == 'required' %}tag-required{% endif %}">
+                            {{ skill.skill }}
+                            {% if skill.priority == 'required' %}<span class="tag-badge">Required</span>{% endif %}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Bonus Skills -->
+                {% if results.skill_match.extra %}
+                <div class="skill-group">
+                    <h3 class="skill-group-title extra-title">⭐ Bonus Skills (not in JD)</h3>
+                    <div class="skill-tags">
+                        {% for skill in results.skill_match.extra %}
+                        <span class="skill-tag tag-extra">{{ skill.skill }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ── Section Scores ────────────────────────────────────────────── -->
+        {% if results.section_scores %}
+        <div class="panel glass-card" id="sections-panel">
+            <h2 class="panel-title">📑 Section Relevance</h2>
+            <p class="panel-subtitle">How well each resume section matches the job description</p>
+
+            <div class="section-bars">
+                {% for section, score in results.section_scores.items() %}
+                <div class="section-bar-row">
+                    <span class="section-bar-label">{{ section | title }}</span>
+                    <div class="section-bar-track">
+                        <div class="section-bar-fill" data-score="{{ score }}" style="--bar-score: {{ score }}%">
+                            <span class="section-bar-value">{{ score | round(0) | int }}%</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ── ATS Compatibility ─────────────────────────────────────────── -->
+        <div class="panel glass-card" id="ats-panel">
+            <h2 class="panel-title">📊 ATS Compatibility</h2>
+            <p class="panel-subtitle">Applicant Tracking System readiness — {{ results.ats.score }}/{{ results.ats.max_score }} points</p>
+
+            <div class="ats-checks">
+                {% for check in results.ats.checks %}
+                <div class="ats-check-row {% if check.passed %}ats-passed{% else %}ats-failed{% endif %}">
+                    <div class="ats-check-header">
+                        <span class="ats-check-icon">{% if check.passed %}✅{% else %}⚠️{% endif %}</span>
+                        <span class="ats-check-name">{{ check.name }}</span>
+                        <span class="ats-check-score">{{ check.score }}/{{ check.max }}</span>
+                    </div>
+                    <p class="ats-check-detail">{{ check.detail }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ── Improvement Suggestions ───────────────────────────────────── -->
+        <div class="panel glass-card" id="suggestions-panel">
+            <h2 class="panel-title">💡 Improvement Suggestions</h2>
+            <p class="panel-subtitle">{{ results.suggestions | length }} actionable recommendations</p>
+
+            <div class="suggestions-list">
+                {% for suggestion in results.suggestions %}
+                <div class="suggestion-card sug-{{ suggestion.severity }}">
+                    <div class="sug-header">
+                        <span class="sug-badge sug-badge-{{ suggestion.severity }}">
+                            {% if suggestion.severity == 'critical' %}🔴 Critical
+                            {% elif suggestion.severity == 'important' %}🟡 Important
+                            {% else %}🔵 Nice to Have{% endif %}
+                        </span>
+                        <span class="sug-category">{{ suggestion.category }}</span>
+                    </div>
+                    <h3 class="sug-title">{{ suggestion.title }}</h3>
+                    <p class="sug-detail">{{ suggestion.detail }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ── Detected Sections ─────────────────────────────────────────── -->
+        <div class="panel glass-card" id="detected-panel">
+            <h2 class="panel-title">📋 Detected Resume Sections</h2>
+            <div class="detected-sections">
+                {% for section in results.sections_found %}
+                <span class="detected-badge">{{ section | title }}</span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ── Action Bar ────────────────────────────────────────────────── -->
+        <div class="action-bar">
+            <a href="{{ url_for('index') }}" class="analyze-btn">
+                <span class="btn-text">Analyze Another Resume</span>
+                <span class="btn-icon">→</span>
+            </a>
+        </div>
+
+    </div>
+</section>
+{% endblock %}
